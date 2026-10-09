@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: stg_model_results
+    description: "Staging view for Netflix Movie versus TV Show classification model results."
+
+    columns:
+      - name: model
+        description: "Classification model used for the Movie versus TV Show prediction task."
+        data_tests:
+          - not_null
+
+      - name: accuracy
+        description: "Overall classification accuracy."
+        data_tests:
+          - not_null
+
+      - name: precision
+        description: "Precision for the positive TV Show class."
+        data_tests:
+          - not_null
+
+      - name: recall
+        description: "Recall for the positive TV Show class."
+        data_tests:
+          - not_null
+
+      - name: f1_score
+        description: "F1 score for the positive TV Show class."
+        data_tests:
+          - not_null
+
+      - name: selected
+        description: "Indicates whether the model was selected for the production workflow."
+        data_tests:
+          - not_null

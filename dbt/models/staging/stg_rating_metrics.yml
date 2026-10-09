@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_rating_metrics
+    description: "Staging view for Netflix catalogue metrics by rating."
+
+    columns:
+      - name: rating
+        description: "Netflix maturity or content rating assigned to the title."
+        data_tests:
+          - not_null
+
+      - name: content_count
+        description: "Number of catalogue titles associated with the rating."
+        data_tests:
+          - not_null
+
+      - name: movie_count
+        description: "Number of Movies associated with the rating."
+        data_tests:
+          - not_null
+
+      - name: tv_show_count
+        description: "Number of TV Shows associated with the rating."
+        data_tests:
+          - not_null
+
+      - name: share_of_catalogue
+        description: "Share of the Netflix catalogue represented by the rating."
+        data_tests:
+          - not_null

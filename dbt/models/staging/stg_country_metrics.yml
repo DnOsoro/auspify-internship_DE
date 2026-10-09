@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_country_metrics
+    description: "Staging view for Netflix catalogue metrics by country."
+
+    columns:
+      - name: country
+        description: "Country associated with one or more Netflix titles."
+        data_tests:
+          - not_null
+
+      - name: content_count
+        description: "Number of catalogue titles associated with the country."
+        data_tests:
+          - not_null
+
+      - name: movie_count
+        description: "Number of Movies associated with the country."
+        data_tests:
+          - not_null
+
+      - name: tv_show_count
+        description: "Number of TV Shows associated with the country."
+        data_tests:
+          - not_null
+
+      - name: share_of_country_assignments
+        description: "Share of all country assignments represented by the country."
+        data_tests:
+          - not_null

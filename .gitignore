@@ -1,0 +1,56 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+!dashboard/.env.example
+
+# Python virtual environments and caches
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Generated data and local data lake
+data/
+data_lake/
+*.pkl
+*.parquet
+
+# Logs
+logs/
+*.log
+
+# Next.js and Node.js
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+dashboard/coverage/
+npm-debug.log*
+
+# IDE and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated logs anywhere in the project
+**/logs/
+**/*.log
+
+# SeaweedFS local runtime data
+infrastructure/seaweedfs/data/
+
+# Python test and coverage output
+.coverage
+htmlcov/
+
+# Accidental terminal help output
+dbt/signment_share
+
+# Generated machine-learning model files
+models/*.pkl

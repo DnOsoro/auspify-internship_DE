@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: int_catalogue_overview
+    description: "Aggregated catalogue metrics used to support executive-level Netflix dashboard KPIs."
+
+    columns:
+      - name: total_titles_added
+        description: "Total number of Netflix titles represented in the catalogue."
+        data_tests:
+          - not_null
+
+      - name: total_movies_added
+        description: "Total number of Movies represented in the catalogue."
+        data_tests:
+          - not_null
+
+      - name: total_tv_shows_added
+        description: "Total number of TV Shows represented in the catalogue."
+        data_tests:
+          - not_null
+
+      - name: movie_share
+        description: "Share of the catalogue represented by Movies."
+        data_tests:
+          - not_null
+
+      - name: tv_show_share
+        description: "Share of the catalogue represented by TV Shows."
+        data_tests:
+          - not_null
+
+      - name: peak_year
+        description: "Complete year with the highest number of catalogue additions."
+        data_tests:
+          - not_null
+
+      - name: peak_year_additions
+        description: "Number of catalogue titles added during the peak complete year."
+        data_tests:
+          - not_null

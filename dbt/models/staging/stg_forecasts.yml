@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_forecasts
+    description: "Staging view for Netflix catalogue forecast results."
+
+    columns:
+      - name: forecast_year
+        description: "Year covered by the catalogue forecast."
+        data_tests:
+          - not_null
+
+      - name: forecast_content_count
+        description: "Forecast number of catalogue titles for the year."
+        data_tests:
+          - not_null
+
+      - name: model
+        description: "Forecasting model used to generate the estimate."
+        data_tests:
+          - not_null
+
+      - name: forecast_type
+        description: "Type or interpretation of the forecast."
+        data_tests:
+          - not_null
+
+      - name: status
+        description: "Status describing the forecast observation."
+        data_tests:
+          - not_null

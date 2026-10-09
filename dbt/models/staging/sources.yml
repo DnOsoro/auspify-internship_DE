@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  - name: netflix
+    description: "Curated Netflix datasets loaded into PostgreSQL by the Python ETL pipeline."
+    schema: netflix
+
+    tables:
+      - name: yearly_trends
+        description: "Yearly Netflix catalogue additions, split by Movies and TV Shows."
+
+      - name: country_metrics
+        description: "Netflix catalogue metrics by country."
+
+      - name: genre_metrics
+        description: "Netflix catalogue metrics by genre."
+
+      - name: rating_metrics
+        description: "Netflix catalogue distribution by rating."
+
+      - name: forecasts
+        description: "Naive baseline catalogue forecasts for 2021 to 2025."
+
+      - name: model_results
+        description: "Performance results for the Netflix Movie vs TV Show classification models."
+
+      - name: data_quality
+        description: "Data quality checks and informational metrics from the cleaned dataset."
+
+      - name: netflix_titles
+        description: "Processed Netflix title records, including content type and movie runtime."

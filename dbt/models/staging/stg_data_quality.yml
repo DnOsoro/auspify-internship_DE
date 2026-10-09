@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_data_quality
+    description: "Staging view for Netflix dataset quality metrics."
+
+    columns:
+      - name: metric
+        description: "Name of the data quality metric being reported."
+        data_tests:
+          - not_null
+
+      - name: value
+        description: "Measured value for the data quality metric."
+        data_tests:
+          - not_null
+
+      - name: status
+        description: "Status assigned to the data quality metric."
+        data_tests:
+          - not_null

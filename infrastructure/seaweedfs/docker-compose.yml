@@ -1,0 +1,42 @@
+services:
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    container_name: netflix-seaweedfs-master
+    command: master -ip=seaweedfs-master
+    ports:
+      - "19333:9333"
+    volumes:
+      - ./data/master:/data
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: netflix-seaweedfs-volume
+    command: volume -mserver=seaweedfs-master:9333 -ip=seaweedfs-volume -port=8080
+    depends_on:
+      - seaweedfs-master
+    ports:
+      - "18080:8080"
+    volumes:
+      - ./data/volume:/data
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: netflix-seaweedfs-filer
+    command: filer -master=seaweedfs-master:9333
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    ports:
+      - "18888:8888"
+    volumes:
+      - ./data/filer:/data
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    container_name: netflix-seaweedfs-s3
+    command: s3 -filer=seaweedfs-filer:8888
+    depends_on:
+      - seaweedfs-filer
+    ports:
+      - "18333:8333"

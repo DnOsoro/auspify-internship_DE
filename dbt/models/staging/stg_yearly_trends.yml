@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_yearly_trends
+    description: "Staging view for yearly Netflix catalogue additions."
+
+    columns:
+      - name: year_added
+        description: "Year in which the title was added to the Netflix catalogue."
+        data_tests:
+          - not_null
+
+      - name: content_count
+        description: "Total number of titles added during the year."
+        data_tests:
+          - not_null
+
+      - name: movie_count
+        description: "Number of Movies added during the year."
+        data_tests:
+          - not_null
+
+      - name: tv_show_count
+        description: "Number of TV Shows added during the year."
+        data_tests:
+          - not_null
+
+      - name: movie_share
+        description: "Share of yearly additions that were Movies."
+        data_tests:
+          - not_null
+
+      - name: tv_show_share
+        description: "Share of yearly additions that were TV Shows."
+        data_tests:
+          - not_null
+
+      - name: is_complete_year
+        description: "Indicates whether the year represents a complete observation period."
+        data_tests:
+          - not_null
+
+      - name: period_status
+        description: "Completeness status of the observation period."
+        data_tests:
+          - not_null
