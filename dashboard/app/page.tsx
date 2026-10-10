@@ -48,6 +48,28 @@ type RatingMetric = {
   share_of_catalogue: number;
 };
 
+type AnalyticsResponse = {
+  filters: {
+    year: number | null;
+    type: string | null;
+    country: string | null;
+    genre: string | null;
+    rating: string | null;
+  };
+  kpis: {
+    total_titles: number | string;
+    total_movies: number | string;
+    total_tv_shows: number | string;
+    movie_share: number | string;
+    tv_show_share: number | string;
+    median_movie_runtime: number | string | null;
+  };
+  trends: YearlyTrend[];
+  countries: { name: string; count: number }[];
+  genres: { name: string; count: number }[];
+  ratings: { name: string; count: number }[];
+};
+
 type DataQualityMetric = {
   metric: string;
   value: string | number;
@@ -107,33 +129,15 @@ function HorizontalBars({
   );
 }
 
-function YearlyChart() {
-  const [yearlyData, setYearlyData] = useState<YearlyTrend[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [trendError, setTrendError] = useState(false);
-
-  useEffect(() => {
-    async function loadTrends() {
-      try {
-        const response = await fetch("/api/trends");
-
-        if (!response.ok) {
-          throw new Error("Could not load catalogue trends");
-        }
-
-        const data: YearlyTrend[] = await response.json();
-        setYearlyData(data);
-      } catch (error) {
-        console.error("Failed to load yearly trends:", error);
-        setTrendError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadTrends();
-  }, []);
-
+function YearlyChart({
+  yearlyData,
+  isLoading,
+  trendError,
+}: {
+  yearlyData: YearlyTrend[];
+  isLoading: boolean;
+  trendError: boolean;
+}) {
   const chartData = yearlyData
     .filter((item) => item.year_added >= 2012)
     .map((item) => ({
@@ -273,125 +277,180 @@ function YearlyChart() {
 }
 
 export default function Home() {
-  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
-  const [kpiError, setKpiError] = useState(false);
-
-  const [countryData, setCountryData] = useState<
-    { name: string; count: number }[]
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [messages, setMessages] = useState<
+    { role: "user" | "assistant"; content: string }[]
   >([]);
-  const [countryError, setCountryError] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
-  const [genreData, setGenreData] = useState<
-    { name: string; count: number }[]
-  >([]);
-  const [genreError, setGenreError] = useState(false);
+  async function askAssistant(questionText: string) {
+    const cleanedQuestion = questionText.trim();
 
-  const [ratingData, setRatingData] = useState<
-    { name: string; count: number }[]
-  >([]);
-  const [ratingError, setRatingError] = useState(false);
+    if (!cleanedQuestion || aiLoading) {
+      return;
+    }
+
+    setMessages((current) => [
+      ...current,
+      { role: "user", content: cleanedQuestion },
+    ]);
+    setQuestion("");
+    setAnswer("");
+    setAiError("");
+    setAiLoading(true);
+
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: cleanedQuestion,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "The assistant could not answer. Please try again.",
+        );
+      }
+
+      if (typeof data.answer !== "string") {
+        throw new Error("The assistant returned an unexpected response.");
+      }
+
+      setAnswer(data.answer);
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: data.answer },
+      ]);
+    } catch (error) {
+      setAiError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedRating, setSelectedRating] = useState("");
+
+  const [filterOptions, setFilterOptions] = useState<{
+    years: number[];
+    types: string[];
+    countries: string[];
+    genres: string[];
+    ratings: string[];
+  }>({
+    years: [],
+    types: [],
+    countries: [],
+    genres: [],
+    ratings: [],
+  });
+
+  useEffect(() => {
+    async function loadFilterOptions() {
+      try {
+        const response = await fetch("/api/filter-options");
+
+        if (!response.ok) {
+          throw new Error("Could not load filter options.");
+        }
+
+        const data = await response.json();
+        setFilterOptions(data);
+      } catch (error) {
+        console.error("Failed to load filter options:", error);
+      }
+    }
+
+    void loadFilterOptions();
+  }, []);
+
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState("");
+
+  const kpis = analytics?.kpis ?? null;
+  const kpiError = Boolean(analyticsError);
+
+  const countryData = analytics?.countries ?? [];
+  const countryError = Boolean(analyticsError);
+
+  const genreData = analytics?.genres ?? [];
+  const genreError = Boolean(analyticsError);
+
+  const ratingData = analytics?.ratings ?? [];
+  const ratingError = Boolean(analyticsError);
+
+  useEffect(() => {
+    async function loadAnalytics() {
+      setAnalyticsLoading(true);
+      setAnalyticsError("");
+
+      try {
+        const params = new URLSearchParams();
+
+        if (selectedYear) params.set("year", selectedYear);
+        if (selectedType) params.set("type", selectedType);
+        if (selectedCountry) params.set("country", selectedCountry);
+        if (selectedGenre) params.set("genre", selectedGenre);
+        if (selectedRating) params.set("rating", selectedRating);
+
+        const query = params.toString();
+        const url = query
+          ? `/api/analytics?${query}`
+          : "/api/analytics";
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Could not load filtered analytics.");
+        }
+
+        const data: AnalyticsResponse = await response.json();
+        setAnalytics(data);
+      } catch (error) {
+        console.error("Failed to load analytics:", error);
+        setAnalyticsError(
+          error instanceof Error
+            ? error.message
+            : "Could not load analytics.",
+        );
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    }
+
+    void loadAnalytics();
+  }, [
+    selectedYear,
+    selectedType,
+    selectedCountry,
+    selectedGenre,
+    selectedRating,
+  ]);
 
   const [qualityData, setQualityData] = useState<DataQualityMetric[]>([]);
   const [qualityError, setQualityError] = useState(false);
   const [qualityLoading, setQualityLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadKpis() {
-      try {
-        const response = await fetch("/api/kpis");
-
-        if (!response.ok) {
-          throw new Error("Could not load dashboard KPIs");
-        }
-
-        const data: DashboardKpis = await response.json();
-        setKpis(data);
-      } catch (error) {
-        console.error("Failed to load dashboard KPIs:", error);
-        setKpiError(true);
-      }
-    }
-
-    loadKpis();
-  }, []);
-
-  useEffect(() => {
-    async function loadCountries() {
-      try {
-        const response = await fetch("/api/countries");
-
-        if (!response.ok) {
-          throw new Error("Could not load country metrics");
-        }
-
-        const data: CountryMetric[] = await response.json();
-
-        setCountryData(
-          data.map((item) => ({
-            name: item.country,
-            count: Number(item.content_count),
-          })),
-        );
-      } catch (error) {
-        console.error("Failed to load country metrics:", error);
-        setCountryError(true);
-      }
-    }
-
-    loadCountries();
-  }, []);
-
-  useEffect(() => {
-    async function loadGenres() {
-      try {
-        const response = await fetch("/api/genres");
-
-        if (!response.ok) {
-          throw new Error("Could not load genre metrics");
-        }
-
-        const data: GenreMetric[] = await response.json();
-
-        setGenreData(
-          data.map((item) => ({
-            name: item.genre,
-            count: Number(item.content_count),
-          })),
-        );
-      } catch (error) {
-        console.error("Failed to load genre metrics:", error);
-        setGenreError(true);
-      }
-    }
-
-    loadGenres();
-  }, []);
-
-  useEffect(() => {
-    async function loadRatings() {
-      try {
-        const response = await fetch("/api/ratings");
-
-        if (!response.ok) {
-          throw new Error("Could not load rating metrics");
-        }
-
-        const data: RatingMetric[] = await response.json();
-
-        setRatingData(
-          data.map((item) => ({
-            name: item.rating,
-            count: Number(item.content_count),
-          })),
-        );
-      } catch (error) {
-        console.error("Failed to load rating metrics:", error);
-        setRatingError(true);
-      }
-    }
-
-    loadRatings();
-  }, []);
+  const [filteredQualityData, setFilteredQualityData] = useState<DataQualityMetric[]>([]);
+  const [filteredQualityError, setFilteredQualityError] = useState(false);
+  const [filteredQualityLoading, setFilteredQualityLoading] = useState(true);
 
   useEffect(() => {
     async function loadDataQuality() {
@@ -414,6 +473,53 @@ export default function Home() {
 
     loadDataQuality();
   }, []);
+
+  useEffect(() => {
+    async function loadFilteredDataQuality() {
+      setFilteredQualityLoading(true);
+      setFilteredQualityError(false);
+
+      try {
+        const params = new URLSearchParams();
+
+        if (selectedYear) params.set("year", selectedYear);
+        if (selectedType) params.set("type", selectedType);
+        if (selectedCountry) params.set("country", selectedCountry);
+        if (selectedGenre) params.set("genre", selectedGenre);
+        if (selectedRating) params.set("rating", selectedRating);
+
+        const query = params.toString();
+        const url = `/api/filtered-data-quality${query ? `?${query}` : ""}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Could not load filtered data quality metrics");
+        }
+
+        const data: { metrics: DataQualityMetric[] } =
+          await response.json();
+
+        setFilteredQualityData(data.metrics);
+      } catch (error) {
+        console.error(
+          "Failed to load filtered data quality metrics:",
+          error,
+        );
+        setFilteredQualityError(true);
+      } finally {
+        setFilteredQualityLoading(false);
+      }
+    }
+
+    void loadFilteredDataQuality();
+  }, [
+    selectedYear,
+    selectedType,
+    selectedCountry,
+    selectedGenre,
+    selectedRating,
+  ]);
 
   return (
     <main className="app-shell">
@@ -494,6 +600,96 @@ export default function Home() {
           </span>
         </div>
 
+        <section className="catalogue-filters" aria-label="Catalogue filters">
+          <div className="filters-heading">
+            <div>
+              <p className="section-kicker">EXPLORE THE DATA</p>
+              <h3>Filter catalogue</h3>
+            </div>
+            <button
+              type="button"
+              className="reset-filters"
+              onClick={() => {
+                setSelectedYear("");
+                setSelectedType("");
+                setSelectedCountry("");
+                setSelectedGenre("");
+                setSelectedRating("");
+              }}
+              disabled={
+                !selectedYear &&
+                !selectedType &&
+                !selectedCountry &&
+                !selectedGenre &&
+                !selectedRating
+              }
+            >
+              Reset filters
+            </button>
+          </div>
+
+          <div className="filters-grid">
+            <label className="filter-field">
+              <span>Year added</span>
+              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
+                <option value="">All years</option>
+                {filterOptions.years.map((year) => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span>Content type</span>
+              <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)}>
+                <option value="">All types</option>
+                {filterOptions.types.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span>Country</span>
+              <select value={selectedCountry} onChange={(event) => setSelectedCountry(event.target.value)}>
+                <option value="">All countries</option>
+                {filterOptions.countries.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span>Genre</span>
+              <select value={selectedGenre} onChange={(event) => setSelectedGenre(event.target.value)}>
+                <option value="">All genres</option>
+                {filterOptions.genres.map((genre) => (
+                  <option key={genre} value={genre}>{genre}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span>Rating</span>
+              <select value={selectedRating} onChange={(event) => setSelectedRating(event.target.value)}>
+                <option value="">All ratings</option>
+                {filterOptions.ratings.map((rating) => (
+                  <option key={rating} value={rating}>{rating}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <p className="filters-note">
+            {analyticsLoading
+              ? "Updating catalogue metrics..."
+              : `Showing ${formatNumber(Number(kpis?.total_titles ?? 0))} titles matching the selected filters.`}
+          </p>
+          {analyticsError && (
+            <p className="filters-error" role="alert">{analyticsError}</p>
+          )}
+        </section>
+
         <section className="metrics-grid" aria-label="Catalogue KPIs">
           {kpiError && (
             <p role="alert">
@@ -503,26 +699,38 @@ export default function Home() {
 
           <MetricCard
             label="TOTAL TITLES"
-            value={kpis ? formatNumber(Number(kpis.total_titles_added)) : "Loading..."}
+            value={kpis ? formatNumber(Number(kpis.total_titles)) : "Loading..."}
             detail="Cleaned records"
           />
 
           <MetricCard
             label="MOVIES"
-            value={kpis ? formatNumber(Number(kpis.total_movies_added)) : "Loading..."}
+            value={kpis ? formatNumber(Number(kpis.total_movies)) : "Loading..."}
             detail={kpis ? `${(Number(kpis.movie_share) * 100).toFixed(2)}% of catalogue` : "Loading database data"}
           />
 
           <MetricCard
             label="TV SHOWS"
-            value={kpis ? formatNumber(Number(kpis.total_tv_shows_added)) : "Loading..."}
+            value={kpis ? formatNumber(Number(kpis.total_tv_shows)) : "Loading..."}
             detail={kpis ? `${(Number(kpis.tv_show_share) * 100).toFixed(2)}% of catalogue` : "Loading database data"}
           />
 
           <MetricCard
             label="PEAK YEAR ADDED"
-            value={kpis ? String(kpis.peak_year) : "Loading..."}
-            detail={kpis ? `${formatNumber(Number(kpis.peak_year_additions))} titles added` : "Loading database data"}
+            value={
+              analyticsLoading
+                ? "Loading..."
+                : analytics?.trends.length
+                  ? String(
+                      analytics.trends.reduce((peak, item) =>
+                        Number(item.content_count) > Number(peak.content_count)
+                          ? item
+                          : peak
+                      ).year_added
+                    )
+                  : "—"
+            }
+            detail={kpis ? `${formatNumber(Number(analytics?.trends.reduce((peak, item) => Number(item.content_count) > Number(peak.content_count) ? item : peak, analytics.trends[0])?.content_count ?? 0))} titles added` : "Loading database data"}
           />
         </section>
 
@@ -535,7 +743,11 @@ export default function Home() {
               </div>
               <span className="mini-tag">2008–2021</span>
             </div>
-            <YearlyChart />
+            <YearlyChart
+              yearlyData={analytics?.trends ?? []}
+              isLoading={analyticsLoading}
+              trendError={Boolean(analyticsError)}
+            />
           </article>
 
           <article className="panel mix-panel">
@@ -559,7 +771,7 @@ export default function Home() {
                   >
                     <div className="donut-center">
                       <strong>
-                        {formatNumber(Number(kpis.total_titles_added))}
+                        {formatNumber(Number(kpis.total_titles))}
                       </strong>
                       <span>total titles</span>
                     </div>
@@ -571,7 +783,7 @@ export default function Home() {
                       <div>
                         <p>Movies</p>
                         <strong>
-                          {formatNumber(Number(kpis.total_movies_added))}
+                          {formatNumber(Number(kpis.total_movies))}
                         </strong>
                         <span>
                           {(Number(kpis.movie_share) * 100).toFixed(2)}%
@@ -584,7 +796,7 @@ export default function Home() {
                       <div>
                         <p>TV shows</p>
                         <strong>
-                          {formatNumber(Number(kpis.total_tv_shows_added))}
+                          {formatNumber(Number(kpis.total_tv_shows))}
                         </strong>
                         <span>
                           {(Number(kpis.tv_show_share) * 100).toFixed(2)}%
@@ -718,6 +930,54 @@ export default function Home() {
           )}
         </section>
 
+        <section className="quality-section" id="filtered-data-quality">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="section-kicker">FILTERED VALIDATION</p>
+              <h2>Filtered Data Quality</h2>
+              <p className="muted-copy">
+                Validation checks for the records matching your current filters.
+              </p>
+            </div>
+            <span className="muted-copy">
+              {filteredQualityLoading
+                ? "Loading checks..."
+                : `${filteredQualityData.length} checks`}
+            </span>
+          </div>
+
+          {filteredQualityError && (
+            <p className="chart-note" role="alert">
+              Could not load filtered data quality metrics. Please refresh the page.
+            </p>
+          )}
+
+          {!filteredQualityLoading && !filteredQualityError && (
+            <div className="quality-grid">
+              {filteredQualityData.map((item) => (
+                <article
+                  className="panel quality-card"
+                  key={item.metric}
+                >
+                  <div className="quality-card-top">
+                    <span className="quality-metric-name">
+                      {item.metric.replace(/_/g, " ")}
+                    </span>
+                    <span
+                      className={`quality-status quality-status-${item.status.toLowerCase()}`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                  <strong className="quality-value">
+                    {formatNumber(Number(item.value))}
+                  </strong>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         <footer className="page-footer">
           <span>NETFLIX CATALOG INTELLIGENCE</span>
           <span>Python · PostgreSQL · dbt · Next.js</span>
@@ -730,53 +990,127 @@ export default function Home() {
           <div className="assistant-avatar">AI</div>
           <div>
             <p className="assistant-title">Data assistant</p>
-            <p className="assistant-subtitle">Project insights · Preview</p>
+            <p className="assistant-subtitle">Netflix catalogue insights · Gemini</p>
           </div>
-          <span className="assistant-status" title="Preview mode" />
+          <span
+            className="assistant-status"
+            title={aiLoading ? "Thinking" : aiError ? "Request failed" : "AI assistant"}
+            style={{ background: aiLoading ? "var(--amber)" : aiError ? "var(--red)" : "var(--green)" }}
+          />
         </div>
 
         <div className="assistant-body">
-          <div className="assistant-intro">
-            <p className="section-kicker">ASK YOUR DATA</p>
-            <h3>Find the story behind the numbers.</h3>
-            <p>
-              The assistant panel is a preview. We will connect it to the
-              project's actual data and AI service in a later step.
-            </p>
-          </div>
+          {messages.length === 0 && (
+            <div className="assistant-welcome">
+              <p className="section-kicker">ASK YOUR DATA</p>
+              <h3>Find the story behind the numbers.</h3>
+              <p>
+                Ask about catalogue composition, yearly additions, genres,
+                countries, ratings, and data quality.
+              </p>
 
-          <p className="suggestion-label">TRY THESE QUESTIONS</p>
-          <div className="suggestion-list">
-            <div className="suggestion">Which year had the most additions?</div>
-            <div className="suggestion">How is the catalogue split?</div>
-            <div className="suggestion">How did the classifier perform?</div>
-          </div>
+              <p className="suggestion-label">TRY A QUESTION</p>
+              <div className="suggestion-list">
+                {[
+                  "Which year had the most additions?",
+                  "How is the catalogue split between movies and TV shows?",
+                  "What is the median movie runtime?",
+                ].map((suggestion) => (
+                  <button
+                    className="suggestion"
+                    key={suggestion}
+                    type="button"
+                    disabled={aiLoading}
+                    onClick={() => void askAssistant(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-          <div className="sample-answer">
-            <span className="answer-label">PROJECT FACT</span>
-            <p>
-              The cleaned dataset contains <strong>8,786 titles</strong>.
-              Movies account for 6,123 records and TV shows account for 2,663.
-            </p>
-            <span className="answer-source">Source: verified dbt dashboard KPIs</span>
-          </div>
+          {messages.length > 0 && (
+            <div className="chat-messages" aria-live="polite">
+              {messages.map((message, index) => (
+                <div
+                  className={`chat-message chat-message-${message.role}`}
+                  key={`${message.role}-${index}`}
+                >
+                  <span className="chat-message-label">
+                    {message.role === "user" ? "YOU" : "DATA ASSISTANT"}
+                  </span>
+                  <div className="chat-message-bubble">
+                    <p>{message.content}</p>
+                  </div>
+                  {message.role === "assistant" && (
+                    <span className="answer-source">
+                      Source: project analytics · AI-generated interpretation
+                    </span>
+                  )}
+                </div>
+              ))}
 
-          <div className="assistant-notice">
-            <span className="notice-mark">i</span>
-            <p>
-              No live AI connection yet. Answers will be grounded in project
-              data once the API is implemented.
-            </p>
-          </div>
+              {aiLoading && (
+                <div className="chat-message chat-message-assistant" role="status">
+                  <span className="chat-message-label">DATA ASSISTANT</span>
+                  <div className="chat-message-bubble chat-thinking">
+                    Analysing project data and preparing an answer...
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {aiError && (
+            <div className="assistant-notice" role="alert">
+              <span className="notice-mark">!</span>
+              <p>{aiError}</p>
+            </div>
+          )}
         </div>
 
-        <div className="assistant-input-wrap">
-          <div className="fake-input">
-            <span>Ask a question about your data…</span>
-            <span className="send-icon">↗</span>
+        <form
+          className="assistant-input-wrap"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void askAssistant(question);
+          }}
+        >
+          <label className="sr-only" htmlFor="assistant-question">
+            Ask a question about the Netflix catalogue
+          </label>
+          <div className="real-input-row">
+            <textarea
+              id="assistant-question"
+              className="assistant-text-input assistant-textarea"
+              rows={2}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void askAssistant(question);
+                }
+              }}
+              placeholder="Ask a question about your Netflix catalogue…"
+              maxLength={1000}
+              disabled={aiLoading}
+              required
+            />
+            <button
+              className="assistant-send-button"
+              type="submit"
+              disabled={aiLoading || !question.trim()}
+              aria-label="Send question"
+            >
+              {aiLoading ? "…" : "↗"}
+            </button>
           </div>
-          <p className="input-caption">AI responses can be wrong. Verify important figures.</p>
-        </div>
+          <p className="input-caption">
+            AI responses can be wrong. Verify important figures.
+          </p>
+        </form>
       </aside>
     </main>
   );

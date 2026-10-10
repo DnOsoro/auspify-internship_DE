@@ -54,3 +54,16 @@ dbt/signment_share
 
 # Generated machine-learning model files
 models/*.pkl
+.neon
+node_modules/
+
+# Local database backups and temporary source copies
+backups/
+*.bak
+*.backup
+*.before-neon
+*.before-analytics-filters
+*.before-filter-options
+*.before-filter-ui
+*.backup-*
+*.before-*
