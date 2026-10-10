@@ -13,7 +13,7 @@
 ![Docker](https://img.shields.io/badge/Docker-local_infra-2496ED?logo=docker&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?logo=vercel&logoColor=white)
 
-[**Live Demo**](#) · [**Architecture**](#architecture) · [**Data Model**](#data-model-dbt) · [**AI Analyst**](#ai-analyst-design) · [**Limitations**](#known-limitations--roadmap)
+[**Live Demo**](https://auspify-internship-de.vercel.app/) · [**Architecture**](#architecture) · [**Data Model**](#data-model-dbt) · [**AI Analyst**](#ai-analyst-design) · [**Limitations**](#known-limitations--roadmap)
 
 </div>
 
