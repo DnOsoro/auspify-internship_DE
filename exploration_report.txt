@@ -1,0 +1,149 @@
+=== TREE (depth 3, no venv) ===
+find: warning: you have specified the global option -maxdepth after the argument -path, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+.
+./data
+./data/Dataset.csv
+./data/netflix_clean.csv
+./data/netflix_clean.pkl
+./exploration_report.txt
+./.gitignore
+./models
+./models/netflix_type_classifier_rf.pkl
+./task1_cleaning
+./task1_cleaning/task1_cleaning.html
+./task1_cleaning/task1_cleaning.ipynb
+./task2_eda
+./task2_eda/Task_2_EDA.html
+./task2_eda/Task_2_EDA.ipynb
+./task3_recommendation system
+./task3_recommendation system/Task_3_Recommendation_System.html
+./task3_recommendation system/Task_3_Recommendation_System.ipynb
+./task4_Trend Prediction Analysis
+./task4_Trend Prediction Analysis/Trend Prediction Analysis.html
+./task4_Trend Prediction Analysis/Trend Prediction Analysis.ipynb
+./task5_classification
+./task5_classification/Machine Learning Classification Model.html
+./task5_classification/Machine Learning Classification Model.ipynb
+
+=== SIZES ===
+4.9M	data
+28M	models
+572K	task1_cleaning
+776K	task2_eda
+360K	task3_recommendation system
+480K	task4_Trend Prediction Analysis
+404K	task5_classification
+
+=== FILES BY TYPE (with size) ===
+1.1M ./data/Dataset.csv
+2.1M ./data/netflix_clean.csv
+1.9M ./data/netflix_clean.pkl
+1.3K ./exploration_report.txt
+28M ./models/netflix_type_classifier_rf.pkl
+123K ./task1_cleaning/task1_cleaning.ipynb
+237K ./task2_eda/Task_2_EDA.ipynb
+33K ./task3_recommendation
+0 ./task4_Trend
+0 ./task5_classification/Machine
+
+=== CSV HEADERS + ROW COUNTS ===
+--- ./data/Dataset.csv (8792 lines)
+show_id,type,title,director,country,date_added,release_year,rating,duration,listed_in
+s1,Movie,Dick Johnson Is Dead,Kirsten Johnson,United States,9/25/2021,2020,PG-13,90 min,Documentaries
+s3,TV Show,Ganglands,Julien Leclercq,France,9/24/2021,2021,TV-MA,1 Season,"Crime TV Shows, International TV Shows, TV Action & Adventure"
+--- ./data/netflix_clean.csv (8788 lines)
+show_id,type,title,director,country,date_added,release_year,rating,duration,listed_in,year_added,month_added,month_name,duration_value,duration_unit,movie_minutes,tv_seasons,country_list,genre_list,director_list,n_countries,n_genres,n_directors,audience,years_to_add,added_before_release
+s1,Movie,Dick Johnson Is Dead,Kirsten Johnson,United States,2021-09-25,2020,PG-13,90 min,Documentaries,2021,9,September,90.0,min,90.0,,['United States'],['Documentaries'],['Kirsten Johnson'],1,1,1,Teens,1,False
+s3,TV Show,Ganglands,Julien Leclercq,France,2021-09-24,2021,TV-MA,1 Season,"Crime TV Shows, International TV Shows, TV Action & Adventure",2021,9,September,1.0,seasons,,1.0,['France'],"['Crime TV Shows', 'International TV Shows', 'TV Action & Adventure']",['Julien Leclercq'],1,3,1,Adults,0,False
+
+=== JSON KEYS ===
+
+=== NOTEBOOK SUMMARY (markdown headings + printed outputs, per task) ===
+
+##### task1_cleaning/task1_cleaning.ipynb
+# Task 1: Data Cleaning & Preprocessing
+# Step 1: Import libraries and load the dataset
+## Step 2: Inspect the dataset structure
+## Step 3: Check for empty columns
+## Step 4: Standardize text and handle missing-value placeholders
+## Step 5: Verify that valid titles were not converted to missing values
+## Step 6: Profile missing values
+## Step 7: Check for misplaced duration values
+## Step 7 Decision: No misplaced durations were found
+## Step 8: Inspect duplicate content records
+## Step 9: Remove confirmed duplicate content records
+### Note on date-like titles
+## Step 10: Standardize rating values
+## Step 11: Handle remaining missing values
+## Step 12: Convert `date_added` to datetime
+## Step 13: Convert month names to an ordered category
+## Step 14: Transform the duration column
+## Step 15: Create clean country, genre, and director lists
+## Step 16: Check the ordering of genre lists
+## Step 16 Decision: Do not create a primary genre
+## Step 17: Check country and director fields before analysis
+### Investigating the Pakistan country label
+### Interpreting the type-controlled results
+## Step 17 Decision: Country and director handling
+## Step 18: Create an audience group
+## Step 19: Convert categorical columns to `category` dtype
+## Step 20: Validate the relationship between content type and duration
+## Step 21: Check year and month coverage
+## Step 21 Decision: Treat 2021 as partial and start the time series in 2016
+## Step 21 Validation: Confirm the latest available month
+## Step 22 Decision: Flag negative year gaps instead of removing them
+## Step 23: Inspect the day of month for titles added
+## Step 24: Check unusually short movie runtimes
+## Step 25: Check for empty strings in the list columns
+## Step 26: Review remaining null values
+## Step 27: Final validation
+## Step 28: Save the cleaned dataset
+## Step 29: Reload and verify the saved datasets
+# Step 30: Final cleaning summary
+
+##### task2_eda/Task_2_EDA.ipynb
+## Step 1: Analyze dataset structure and statistics
+### Preparing list-based columns for EDA
+## Step 2: Study content distribution by type
+### Step 2 Finding
+## Step 3: Identify top countries and categories
+### Step 3 Finding
+## Step 4: Create visualizations for key metrics
+### 4.1 Movies vs TV Shows
+### Visualization Finding
+### 4.2 Top 10 Countries
+### Visualization Finding
+### 4.3 Top 10 Categories
+### Visualization Finding
+### 4.4 Content Added to Netflix Over Time
+### Visualization Finding
+### 4.5 Movie Runtime Distribution
+### Visualization Finding
+## Step 5: Summarize findings
+
+##### task3_recommendation system/Task_3_Recommendation_System.ipynb
+# Task 3: Recommendation System Analysis
+## Objective
+## Preparing list-based columns
+## Step 1: Extract relevant content features
+## Step 2: Perform text preprocessing
+## Step 3: Calculate content similarity
+## Step 4: Generate recommendations for selected titles
+  > title  similarity_score | 0               Gerald's Game            0.8056 | 1                        Hush            0.7570 | 2     Brand New Cherry Flavor            0.6911 | 3   The Haunting of Bly Manor            0.6911 | 4                     Ratched            0.6911 | 5  The Haunting of Hill House       
+## Step 5: Evaluate recommendation quality
+  > title  similarity_score  genre_overlap  same_type | 0               Gerald's Game            0.8056            0.0      False | 1                        Hush            0.7570            0.0      False | 2     Brand New Cherry Flavor            0.6911            1.0       True | 3   The Haunting of Bly Mano
+### Evaluation findings
+  > Recommendation evaluation for: Midnight Mass |  | Average similarity score: 0.6918 | Recommendations with genre overlap: 7 out of 10 | Recommendations with same content type: 7 out of 10 | Recommendations with complete genre overlap: 5 out of 10
+## Final Summary
+
+##### task4_Trend Prediction Analysis/Trend Prediction Analysis.ipynb
+cannot read: Expecting value: line 1 column 1 (char 0)
+
+##### task5_classification/Machine Learning Classification Model.ipynb
+cannot read: Expecting value: line 1 column 1 (char 0)
+
+=== PYTHON SCRIPTS (imports + function names) ===
+
+=== GIT STATUS ===
+fatal: not a git repository (or any of the parent directories): .git
+*.pkl
