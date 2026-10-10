@@ -8,8 +8,10 @@ const MAX_QUESTION_LENGTH = 1000;
 const SYSTEM_PROMPT = `
 You are the AI analyst for a Netflix Catalogue Intelligence dashboard.
 
-Your job is to explain the supplied Netflix catalogue analytics clearly
-and accurately.
+Return only the final answer intended for the dashboard user.
+Never output private reasoning, a thinking process, analysis notes,
+drafts, or a step-by-step description of how you reached the answer.
+Start directly with the answer.
 
 Rules:
 - Use only the analytics supplied in the DATA CONTEXT.
@@ -26,9 +28,9 @@ Rules:
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.NVIDIA_API_KEY;
     const model =
-      process.env.OPENROUTER_MODEL || "google/gemini-3.8-flash";
+      "nvidia/nemotron-3.5-lightning-30b-a3b";
 
     if (!apiKey) {
       return NextResponse.json(
@@ -175,7 +177,7 @@ export async function POST(request: Request) {
     };
 
     const aiResponse = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "https://integrate.api.nvidia.com/v1/chat/completions",
       {
         method: "POST",
         headers: {
@@ -199,6 +201,9 @@ export async function POST(request: Request) {
           ],
           max_tokens: 600,
           temperature: 0.2,
+          chat_template_kwargs: {
+            enable_thinking: false,
+          },
           stream: false,
         }),
         signal: AbortSignal.timeout(25000),
@@ -207,7 +212,7 @@ export async function POST(request: Request) {
 
     if (!aiResponse.ok) {
       // Do not return the provider response or credentials to the client.
-      console.error("OpenRouter request failed with status:", aiResponse.status);
+      console.error("NVIDIA request failed with status:", aiResponse.status);
 
       if (aiResponse.status === 429) {
         return NextResponse.json(
@@ -230,17 +235,31 @@ export async function POST(request: Request) {
     }
 
     const result = await aiResponse.json();
-    const answer = result?.choices?.[0]?.message?.content;
+    const rawAnswer = result?.choices?.[0]?.message?.content;
 
-    if (typeof answer !== "string" || !answer.trim()) {
+    if (typeof rawAnswer !== "string" || !rawAnswer.trim()) {
       return NextResponse.json(
         { error: "The AI returned an empty answer. Please try again." },
         { status: 502 },
       );
     }
 
+    const answer = rawAnswer.trim();
+    const containsReasoning =
+      /thinking process|analyze user input|formulate response|let me think through|chain of thought/i.test(
+        answer,
+      );
+
+    if (containsReasoning) {
+      console.error("NVIDIA returned reasoning-style output; withheld from client.");
+      return NextResponse.json(
+        { error: "The AI did not return a clean final answer. Please try again." },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json({
-      answer: answer.trim(),
+      answer,
       model,
     });
   } catch (error) {

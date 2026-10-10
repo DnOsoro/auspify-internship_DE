@@ -36,8 +36,8 @@ function readOptionalText(
 }
 
 export async function GET(request: Request) {
+  const params = new URL(request.url).searchParams;
   try {
-    const params = new URL(request.url).searchParams;
 
     const yearText = params.get("year");
     let year: number | null = null;
